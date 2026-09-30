@@ -1,0 +1,795 @@
+<!DOCTYPE html>
+<html lang="en" class="dark scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>civic.ai</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        civic: {
+                            50: '#ecfdf5',
+                            100: '#d1fae5',
+                            400: '#34d399',
+                            500: '#10b981',
+                            600: '#059669',
+                            dark: '#030712',
+                            panel: '#0a0f1d',
+                            border: '#1e293b'
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Plus Jakarta Sans', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'monospace'],
+                    },
+                    animation: {
+                        'pulse-glow': 'pulseGlow 3s infinite alternate',
+                        'float': 'float 5s ease-in-out infinite',
+                        'scanline': 'scanline 8s linear infinite',
+                    },
+                    keyframes: {
+                        pulseGlow: {
+                            '0%': { opacity: '0.25', transform: 'scale(0.98)' },
+                            '100%': { opacity: '0.65', transform: 'scale(1.02)' }
+                        },
+                        float: {
+                            '0%, 100%': { transform: 'translateY(0px)' },
+                            '50%': { transform: 'translateY(-10px)' }
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,400;0,600;0,800;1,400&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    
+    <style>
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: #030712;
+            color: #f1f5f9;
+            overflow-x: hidden;
+        }
+        .font-mono {
+            font-family: 'JetBrains Mono', monospace;
+        }
+        .glass-panel {
+            background: rgba(10, 15, 29, 0.85);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+        }
+        .glass-card-hover {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .glass-card-hover:hover {
+            border-color: rgba(16, 185, 129, 0.4);
+            box-shadow: 0 10px 30px rgba(16, 185, 129, 0.15);
+            transform: translateY(-4px);
+        }
+        .glow-title {
+            text-shadow: 0 0 35px rgba(16, 185, 129, 0.4), 0 0 70px rgba(6, 182, 212, 0.2);
+        }
+        .glow-dev {
+            text-shadow: 0 0 25px rgba(245, 158, 11, 0.3);
+        }
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #030712;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #1e293b;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #10b981;
+        }
+    </style>
+</head>
+<body class="relative min-h-screen flex flex-col justify-between selection:bg-emerald-500 selection:text-black">
+
+    <canvas id="bg-canvas" class="fixed inset-0 pointer-events-none z-0"></canvas>
+    
+    <div class="fixed top-10 left-1/3 w-[600px] h-[600px] bg-emerald-500/10 rounded-full blur-[150px] pointer-events-none animate-pulse-glow z-0"></div>
+    <div class="fixed bottom-10 right-1/4 w-[500px] h-[500px] bg-cyan-500/10 rounded-full blur-[150px] pointer-events-none animate-pulse-glow z-0" style="animation-delay: 2s;"></div>
+
+    <div class="relative z-10 flex flex-col min-h-screen">
+
+        <header class="w-full px-6 lg:px-12 py-4 flex items-center justify-between border-b border-white/10 backdrop-blur-2xl bg-slate-950/80 sticky top-0 z-50">
+            <div class="flex items-center space-x-3">
+                <a href="#" class="flex items-center space-x-3 group">
+                    <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-emerald-500 via-cyan-500 to-indigo-600 p-[1px] flex items-center justify-center shadow-lg shadow-emerald-500/20 group-hover:shadow-emerald-500/40 transition-all">
+                        <div class="w-full h-full bg-slate-950 rounded-[11px] flex items-center justify-center">
+                            <i class="fa-solid fa-hands-holding-circle text-emerald-400 text-lg"></i>
+                        </div>
+                    </div>
+                    <span class="text-2xl font-extrabold tracking-tight text-white">
+                        civic<span class="text-emerald-400">.ai</span>
+                    </span>
+                </a>
+                <span class="hidden sm:inline-flex items-center space-x-1.5 px-2.5 py-0.5 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-300 text-[10px] font-mono font-bold uppercase tracking-wider">
+                    <span class="w-1.5 h-1.5 rounded-full bg-amber-400 animate-ping"></span>
+                    <span>UNDER DEVELOPMENT</span>
+                </span>
+            </div>
+
+            <!-- Navigation Links -->
+            <nav class="hidden lg:flex items-center space-x-8 text-xs font-mono uppercase tracking-wider text-slate-300">
+                <a href="#demo" class="hover:text-emerald-400 transition-colors flex items-center space-x-1.5">
+                    <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
+                    <span>Interactive Demo</span>
+                </a>
+                <a href="#bridge" class="hover:text-emerald-400 transition-colors">Core Vision</a>
+                <a href="#modules" class="hover:text-emerald-400 transition-colors">Platform Modules</a>
+                <a href="#principles" class="hover:text-emerald-400 transition-colors">Core Philosophy</a>
+            </nav>
+
+            <!-- Demo Badge Button -->
+            <div class="flex items-center space-x-3">
+                <a href="#demo" class="px-3.5 py-2 rounded-xl bg-gradient-to-r from-emerald-500 to-cyan-500 text-slate-950 font-extrabold text-xs uppercase font-mono tracking-wider shadow-lg shadow-emerald-500/20 hover:scale-105 transition-all flex items-center space-x-2">
+                    <i class="fa-solid fa-play text-[10px]"></i>
+                    <span>Product Demo</span>
+                </a>
+            </div>
+        </header>
+
+        <section class="container mx-auto px-6 lg:px-12 pt-12 pb-16 text-center flex flex-col items-center justify-center relative">
+            
+            <!-- Development Status Badge -->
+            <div class="inline-flex items-center space-x-2 px-4 py-1.5 rounded-full glass-panel border border-amber-500/40 text-amber-300 text-xs font-mono mb-8 shadow-lg shadow-amber-500/5">
+                <i class="fa-solid fa-code-branch text-amber-400"></i>
+                <span class="font-bold tracking-wider uppercase">STATUS: IN ACTIVE DEVELOPMENT</span>
+                <span class="text-slate-500">|</span>
+                <span class="text-slate-300">CIVIC.AI — DEMO PREVIEW</span>
+            </div>
+
+            <!-- Massive UNDER DEVELOPMENT Header -->
+            <h1 class="text-5xl sm:text-7xl md:text-8xl lg:text-9xl font-black tracking-tight text-transparent bg-clip-text bg-gradient-to-b from-amber-200 via-amber-400 to-amber-600 glow-dev mb-4 leading-none select-none">
+                UNDER DEVELOPMENT
+            </h1>
+
+            <div class="text-2xl sm:text-4xl md:text-5xl font-extrabold tracking-tight text-white max-w-5xl leading-tight mb-6">
+                The Next-Generation <span class="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 via-cyan-400 to-blue-500 glow-title">AI Citizen Assistance Platform</span>
+            </div>
+
+            <p class="text-base md:text-xl text-slate-300 max-w-3xl font-normal leading-relaxed mb-10">
+                CivicAI is an AI-powered platform designed to make it easier for ordinary citizens to understand, report, organize, and follow up on public and civic problems.
+            </p>
+
+            <div class="flex flex-wrap items-center justify-center gap-4 mb-16">
+                <a href="#demo" class="px-8 py-4 rounded-xl bg-gradient-to-r from-emerald-500 via-cyan-500 to-blue-600 text-slate-950 font-bold text-sm tracking-wide shadow-xl shadow-emerald-500/25 hover:shadow-emerald-500/40 hover:-translate-y-0.5 transition-all flex items-center space-x-3">
+                    <i class="fa-solid fa-flask text-slate-950"></i>
+                    <span class="uppercase font-mono">Launch Interactive Product Demo</span>
+                </a>
+                <a href="#bridge" class="px-8 py-4 rounded-xl glass-panel border border-slate-700 hover:border-slate-500 text-white font-semibold text-sm tracking-wide hover:-translate-y-0.5 transition-all flex items-center space-x-2">
+                    <i class="fa-solid fa-sitemap text-emerald-400"></i>
+                    <span>Explore Conceptual Vision</span>
+                </a>
+            </div>
+
+            <!-- Demo Banner Alert Box -->
+            <div class="w-full max-w-4xl glass-panel rounded-2xl p-4 border border-emerald-500/30 bg-emerald-950/20 text-slate-300 text-xs font-mono flex items-center justify-between">
+                <div class="flex items-center space-x-3">
+                    <div class="w-8 h-8 rounded-lg bg-emerald-500/20 flex items-center justify-center text-emerald-400 shrink-0">
+                        <i class="fa-solid fa-eye"></i>
+                    </div>
+                    <p class="text-left leading-relaxed">
+                        <strong class="text-emerald-300 font-bold">PROTOTYPE NOTICE:</strong> This page serves as a live portfolio demonstration of <strong class="text-white">civic.ai</strong> architecture, core philosophy, and interactive grievance analysis mock engine.
+                    </p>
+                </div>
+                <span class="hidden md:inline-block px-3 py-1 rounded bg-slate-900 border border-slate-700 text-slate-400 text-[10px] shrink-0 font-bold">PREVIEW BUILD</span>
+            </div>
+
+        </section>
+
+        <section id="bridge" class="container mx-auto px-6 lg:px-12 py-16 scroll-mt-20">
+            <div class="text-center max-w-3xl mx-auto mb-12">
+                <span class="text-xs font-mono text-emerald-400 uppercase tracking-widest bg-emerald-950/60 border border-emerald-800/50 px-3 py-1 rounded-full">Core Conceptual Engine</span>
+                <h2 class="text-3xl md:text-4xl font-extrabold text-white mt-3">The Civic Assistance Bridge</h2>
+                <p class="text-sm md:text-base text-slate-400 mt-2">CivicAI transforms raw, unstructured descriptions of civic problems into structured, actionable intelligence without replacing government authorities.</p>
+            </div>
+
+            <div class="glass-panel rounded-3xl p-8 border border-slate-800 relative overflow-hidden">
+                <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-7 gap-3 text-center">
+                    
+                    <div class="bg-slate-900/80 p-4 rounded-xl border border-slate-800 flex flex-col items-center justify-center">
+                        <div class="w-10 h-10 rounded-lg bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400 text-lg mb-2">
+                            <i class="fa-solid fa-user font-bold"></i>
+                        </div>
+                        <span class="text-xs font-mono font-bold text-white">1. Citizen</span>
+                        <span class="text-[10px] text-slate-400 mt-1">Raw natural input</span>
+                    </div>
+
+                    <div class="bg-slate-900/80 p-4 rounded-xl border border-slate-800 flex flex-col items-center justify-center">
+                        <div class="w-10 h-10 rounded-lg bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center text-cyan-400 text-lg mb-2">
+                            <i class="fa-solid fa-triangle-exclamation"></i>
+                        </div>
+                        <span class="text-xs font-mono font-bold text-white">2. Problem</span>
+                        <span class="text-[10px] text-slate-400 mt-1">Civic issue observed</span>
+                    </div>
+
+                    <div class="bg-slate-900/80 p-4 rounded-xl border border-slate-800 flex flex-col items-center justify-center">
+                        <div class="w-10 h-10 rounded-lg bg-blue-500/10 border border-blue-500/30 flex items-center justify-center text-blue-400 text-lg mb-2">
+                            <i class="fa-solid fa-brain"></i>
+                        </div>
+                        <span class="text-xs font-mono font-bold text-white">3. Understanding</span>
+                        <span class="text-[10px] text-slate-400 mt-1">NLU reasoning layer</span>
+                    </div>
+
+                    <div class="bg-slate-900/80 p-4 rounded-xl border border-slate-800 flex flex-col items-center justify-center">
+                        <div class="w-10 h-10 rounded-lg bg-indigo-500/10 border border-indigo-500/30 flex items-center justify-center text-indigo-400 text-lg mb-2">
+                            <i class="fa-solid fa-list-check"></i>
+                        </div>
+                        <span class="text-xs font-mono font-bold text-white">4. Grievance</span>
+                        <span class="text-[10px] text-slate-400 mt-1">Structured taxonomy</span>
+                    </div>
+
+                    <div class="bg-slate-900/80 p-4 rounded-xl border border-slate-800 flex flex-col items-center justify-center">
+                        <div class="w-10 h-10 rounded-lg bg-purple-500/10 border border-purple-500/30 flex items-center justify-center text-purple-400 text-lg mb-2">
+                            <i class="fa-solid fa-building-flag"></i>
+                        </div>
+                        <span class="text-xs font-mono font-bold text-white">5. Department</span>
+                        <span class="text-[10px] text-slate-400 mt-1">Likely authority</span>
+                    </div>
+
+                    <div class="bg-slate-900/80 p-4 rounded-xl border border-slate-800 flex flex-col items-center justify-center">
+                        <div class="w-10 h-10 rounded-lg bg-rose-500/10 border border-rose-500/30 flex items-center justify-center text-rose-400 text-lg mb-2">
+                            <i class="fa-solid fa-route"></i>
+                        </div>
+                        <span class="text-xs font-mono font-bold text-white">6. Follow-up</span>
+                        <span class="text-[10px] text-slate-400 mt-1">Actionable next step</span>
+                    </div>
+
+                    <div class="bg-slate-900/80 p-4 rounded-xl border border-slate-800 flex flex-col items-center justify-center col-span-2 sm:col-span-1">
+                        <div class="w-10 h-10 rounded-lg bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400 text-lg mb-2">
+                            <i class="fa-solid fa-chart-line"></i>
+                        </div>
+                        <span class="text-xs font-mono font-bold text-white">7. Insight</span>
+                        <span class="text-[10px] text-slate-400 mt-1">Community trend</span>
+                    </div>
+
+                </div>
+            </div>
+        </section>
+
+        <section id="demo" class="container mx-auto px-6 lg:px-12 py-16 scroll-mt-20">
+            
+            <div class="flex flex-col md:flex-row md:items-end justify-between mb-10 pb-4 border-b border-slate-800 gap-4">
+                <div>
+                    <div class="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 text-xs font-mono mb-3">
+                        <i class="fa-solid fa-play text-[10px]"></i>
+                        <span class="font-bold">INTERACTIVE DEMO / PROTOTYPE</span>
+                    </div>
+                    <h2 class="text-3xl md:text-5xl font-extrabold text-white">Grievance Analyzer Demo</h2>
+                    <p class="text-slate-400 text-sm mt-1 max-w-2xl">
+                        Simulate how CivicAI transforms natural citizen input into structured, transparent grievance data and formal petition drafts.
+                    </p>
+                </div>
+                
+                <!-- Tamil / English Language Selector -->
+                <div class="flex items-center space-x-2 bg-slate-900 border border-slate-800 p-1 rounded-xl shrink-0">
+                    <span class="text-[11px] font-mono text-slate-400 px-2">Preset Language:</span>
+                    <button id="btn-lang-en" onclick="selectDemoLanguage('en')" class="px-3 py-1 rounded-lg text-xs font-mono bg-emerald-500/20 text-emerald-300 font-bold border border-emerald-500/30">
+                        English
+                    </button>
+                    <button id="btn-lang-ta" onclick="selectDemoLanguage('ta')" class="px-3 py-1 rounded-lg text-xs font-mono text-slate-400 hover:text-slate-200">
+                        தமிழ் (Tamil)
+                    </button>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+                
+                <!-- Left Input Panel -->
+                <div class="lg:col-span-5 glass-panel p-6 rounded-2xl border border-slate-800 flex flex-col justify-between">
+                    <div>
+                        <div class="flex items-center justify-between mb-3">
+                            <label class="text-xs font-mono uppercase tracking-wider text-slate-300 font-semibold flex items-center space-x-2">
+                                <i class="fa-solid fa-pen-to-square text-emerald-400"></i>
+                                <span>Step 1: Describe Civic Issue</span>
+                            </label>
+                        </div>
+
+                        <!-- Sample Quick-Fill Prompts -->
+                        <div class="mb-4">
+                            <span class="text-[11px] font-mono text-slate-400 block mb-2">Click to load preset scenario:</span>
+                            <div class="grid grid-cols-2 gap-2">
+                                <button onclick="fillDemoPreset('pothole')" class="text-xs bg-slate-900/90 hover:bg-slate-800 border border-slate-700/60 p-2.5 rounded-xl text-slate-300 transition-colors text-left flex items-center space-x-2">
+                                    <span>🚧</span>
+                                    <span class="truncate">School Pothole</span>
+                                </button>
+                                <button onclick="fillDemoPreset('garbage')" class="text-xs bg-slate-900/90 hover:bg-slate-800 border border-slate-700/60 p-2.5 rounded-xl text-slate-300 transition-colors text-left flex items-center space-x-2">
+                                    <span>🗑️</span>
+                                    <span class="truncate">Market Garbage</span>
+                                </button>
+                                <button onclick="fillDemoPreset('water')" class="text-xs bg-slate-900/90 hover:bg-slate-800 border border-slate-700/60 p-2.5 rounded-xl text-slate-300 transition-colors text-left flex items-center space-x-2">
+                                    <span>🚰</span>
+                                    <span class="truncate">Water Supply</span>
+                                </button>
+                                <button onclick="fillDemoPreset('light')" class="text-xs bg-slate-900/90 hover:bg-slate-800 border border-slate-700/60 p-2.5 rounded-xl text-slate-300 transition-colors text-left flex items-center space-x-2">
+                                    <span>💡</span>
+                                    <span class="truncate">Broken Streetlight</span>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Input Textarea -->
+                        <textarea id="demo-input" rows="7" placeholder="There has been a huge pothole near our school for two months. Bikes are frequently falling there..."
+                            class="w-full p-4 bg-slate-950/90 border border-slate-700/70 rounded-xl focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 text-slate-100 placeholder-slate-500 text-sm font-sans leading-relaxed resize-none"></textarea>
+                    </div>
+
+                    <div class="mt-6">
+                        <button onclick="runDemoAnalysis()" id="demo-run-btn" class="w-full py-4 rounded-xl bg-gradient-to-r from-emerald-500 via-cyan-500 to-blue-600 text-slate-950 font-black text-xs uppercase tracking-widest shadow-lg shadow-emerald-500/20 hover:shadow-emerald-500/40 hover:scale-[1.01] transition-all flex items-center justify-center space-x-2 font-mono">
+                            <i class="fa-solid fa-bolt"></i>
+                            <span>Run Simulated AI Analysis</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Right Output Panel -->
+                <div class="lg:col-span-7 glass-panel rounded-2xl border border-slate-800 overflow-hidden flex flex-col min-h-[500px]">
+                    <!-- Output Header Tabs -->
+                    <div class="px-6 py-3 bg-slate-900/90 border-b border-slate-800 flex items-center justify-between">
+                        <div class="flex items-center space-x-2">
+                            <button id="tab-struct" onclick="switchDemoTab('struct')" class="text-xs font-mono font-bold px-3 py-1.5 rounded-lg bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 flex items-center space-x-1.5">
+                                <i class="fa-solid fa-diagram-project text-[11px]"></i>
+                                <span>Step 2: Structured Output</span>
+                            </button>
+                            <button id="tab-letter" onclick="switchDemoTab('letter')" class="text-xs font-mono font-medium px-3 py-1.5 rounded-lg text-slate-400 hover:text-white flex items-center space-x-1.5">
+                                <i class="fa-solid fa-file-lines text-[11px]"></i>
+                                <span>Formal Draft Draft</span>
+                            </button>
+                        </div>
+                        <span class="text-[10px] font-mono text-emerald-400 bg-emerald-950/80 px-2 py-0.5 rounded border border-emerald-800/50">MOCK AI RESULT</span>
+                    </div>
+
+                    <!-- Output Content Area -->
+                    <div class="p-6 flex-grow flex flex-col justify-between">
+                        
+                        <!-- TAB 1: Structured Outcome -->
+                        <div id="demo-struct-view" class="space-y-5">
+                            
+                            <!-- Badges Grid -->
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 pb-4 border-b border-slate-800">
+                                <div>
+                                    <span class="text-[10px] font-mono text-slate-400 uppercase tracking-wider block">Identified Category</span>
+                                    <div class="mt-1">
+                                        <span id="demo-res-category" class="px-2.5 py-1 rounded bg-cyan-950 border border-cyan-800 text-cyan-300 font-mono text-xs font-bold">Road Infrastructure</span>
+                                        <span id="demo-res-subcat" class="text-xs text-slate-300 ml-2">Pothole Hazard</span>
+                                    </div>
+                                </div>
+                                <div>
+                                    <span class="text-[10px] font-mono text-slate-400 uppercase tracking-wider block">Assessed Severity</span>
+                                    <div class="mt-1">
+                                        <span id="demo-res-severity" class="inline-flex items-center space-x-1 px-2.5 py-1 rounded bg-amber-500/20 border border-amber-500/40 text-amber-300 font-mono text-xs font-bold">
+                                            <i class="fa-solid fa-triangle-exclamation text-amber-400"></i>
+                                            <span>HIGH / Safety Concern</span>
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Summary & Department -->
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div class="bg-slate-900/60 p-4 rounded-xl border border-slate-800">
+                                    <span class="text-[11px] font-mono text-emerald-400 font-semibold uppercase block mb-1">Concise Summary</span>
+                                    <p id="demo-res-summary" class="text-xs text-slate-300 leading-relaxed">
+                                        Persistent pothole near school entrance causing active traffic hazard and minor vehicle skidding over two months.
+                                    </p>
+                                </div>
+
+                                <div class="bg-slate-900/60 p-4 rounded-xl border border-slate-800">
+                                    <span class="text-[11px] font-mono text-cyan-400 font-semibold uppercase block mb-1">Likely Authority</span>
+                                    <p id="demo-res-dept" class="text-xs font-bold text-white">Highways & Municipal Works Dept</p>
+                                    <p class="text-[10px] text-slate-400 mt-1">Status: <span class="text-amber-400 font-mono">Suggested Guidance</span></p>
+                                </div>
+                            </div>
+
+                            <!-- Key Facts & Next Steps -->
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div class="bg-slate-900/40 p-4 rounded-xl border border-slate-800">
+                                    <span class="text-[10px] font-mono text-slate-400 uppercase block mb-2 font-bold">Extracted Facts</span>
+                                    <ul id="demo-res-facts" class="space-y-1.5 text-xs text-slate-300">
+                                        <li class="flex items-start space-x-2"><i class="fa-solid fa-check text-emerald-400 text-[10px] mt-1"></i><span>Location: Near school entrance</span></li>
+                                        <li class="flex items-start space-x-2"><i class="fa-solid fa-check text-emerald-400 text-[10px] mt-1"></i><span>Duration: ~2 months</span></li>
+                                        <li class="flex items-start space-x-2"><i class="fa-solid fa-check text-emerald-400 text-[10px] mt-1"></i><span>Risk: Two-wheeler falls</span></li>
+                                    </ul>
+                                </div>
+
+                                <div class="bg-slate-900/40 p-4 rounded-xl border border-slate-800">
+                                    <span class="text-[10px] font-mono text-slate-400 uppercase block mb-2 font-bold">Recommended Citizen Action</span>
+                                    <ul id="demo-res-actions" class="space-y-1.5 text-xs text-slate-300">
+                                        <li class="flex items-start space-x-2"><i class="fa-solid fa-camera text-cyan-400 text-[10px] mt-1"></i><span>Capture geotagged photo evidence</span></li>
+                                        <li class="flex items-start space-x-2"><i class="fa-solid fa-file-pen text-cyan-400 text-[10px] mt-1"></i><span>Prepare formal letter draft</span></li>
+                                    </ul>
+                                </div>
+                            </div>
+
+                        </div>
+
+                        <!-- TAB 2: Formal Complaint Letter Generator View -->
+                        <div id="demo-letter-view" class="hidden space-y-3">
+                            <div class="flex items-center justify-between">
+                                <span class="text-xs font-mono text-slate-400">Formal Grievance Draft (Citizen Editable)</span>
+                                <button onclick="copyDemoDraft()" class="text-xs bg-slate-800 hover:bg-slate-700 px-3 py-1 rounded text-slate-200 font-mono transition-colors">
+                                    <span id="demo-copy-txt">Copy Text</span>
+                                </button>
+                            </div>
+                            <textarea id="demo-letter-textarea" rows="11" class="w-full p-4 bg-slate-950 font-mono text-xs text-slate-200 border border-slate-800 rounded-xl focus:outline-none focus:border-emerald-500 leading-relaxed"></textarea>
+                        </div>
+
+                        <!-- Safety Note -->
+                        <div class="mt-4 pt-3 border-t border-slate-800 flex items-center justify-between text-[11px] text-slate-500 font-mono">
+                            <span><i class="fa-solid fa-shield text-emerald-400 mr-1"></i> Transparent AI-assisted analysis · Not an official municipal decree</span>
+                            <span class="text-slate-400">civic.ai</span>
+                        </div>
+
+                    </div>
+                </div>
+
+            </div>
+        </section>
+
+        <section id="modules" class="container mx-auto px-6 lg:px-12 py-16 scroll-mt-20">
+            <div class="text-center max-w-3xl mx-auto mb-12">
+                <span class="text-xs font-mono text-cyan-400 uppercase tracking-widest bg-cyan-950/60 border border-cyan-800/50 px-3 py-1 rounded-full">Ecosystem Overview</span>
+                <h2 class="text-3xl md:text-4xl font-extrabold text-white mt-3">Core CivicAI Modules</h2>
+                <p class="text-sm md:text-base text-slate-400 mt-2">CivicAI is designed as a broader citizen assistance platform beyond a simple AI analyzer.</p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                
+                <div class="glass-panel p-6 rounded-2xl border border-slate-800 glass-card-hover">
+                    <div class="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400 text-lg mb-4">
+                        <i class="fa-solid fa-brain"></i>
+                    </div>
+                    <h3 class="text-base font-bold text-white mb-2">A. AI Public Grievance Analyzer</h3>
+                    <p class="text-xs text-slate-400 leading-relaxed">Flagship module that extracts key facts, priority scoring, concise summary, and missing information checklist.</p>
+                </div>
+
+                <div class="glass-panel p-6 rounded-2xl border border-slate-800 glass-card-hover">
+                    <div class="w-10 h-10 rounded-xl bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center text-cyan-400 text-lg mb-4">
+                        <i class="fa-solid fa-file-signature"></i>
+                    </div>
+                    <h3 class="text-base font-bold text-white mb-2">B. AI Complaint Draft Generator</h3>
+                    <p class="text-xs text-slate-400 leading-relaxed">Transforms informal explanations into professionally drafted grievance petitions ready for citizen review.</p>
+                </div>
+
+                <div class="glass-panel p-6 rounded-2xl border border-slate-800 glass-card-hover">
+                    <div class="w-10 h-10 rounded-xl bg-indigo-500/10 border border-indigo-500/30 flex items-center justify-center text-indigo-400 text-lg mb-4">
+                        <i class="fa-solid fa-building-flag"></i>
+                    </div>
+                    <h3 class="text-base font-bold text-white mb-2">C. Department Guidance</h3>
+                    <p class="text-xs text-slate-400 leading-relaxed">Directs citizens toward likely relevant authorities based on issue classification and municipal jurisdiction.</p>
+                </div>
+
+                <div class="glass-panel p-6 rounded-2xl border border-slate-800 glass-card-hover">
+                    <div class="w-10 h-10 rounded-xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400 text-lg mb-4">
+                        <i class="fa-solid fa-clone"></i>
+                    </div>
+                    <h3 class="text-base font-bold text-white mb-2">D. Duplicate Detection</h3>
+                    <p class="text-xs text-slate-400 leading-relaxed">Identifies semantically similar complaints to highlight recurring community problems and reduce redundant filing.</p>
+                </div>
+
+                <div class="glass-panel p-6 rounded-2xl border border-slate-800 glass-card-hover">
+                    <div class="w-10 h-10 rounded-xl bg-purple-500/10 border border-purple-500/30 flex items-center justify-center text-purple-400 text-lg mb-4">
+                        <i class="fa-solid fa-chart-pie"></i>
+                    </div>
+                    <h3 class="text-base font-bold text-white mb-2">E. Civic Analytics</h3>
+                    <p class="text-xs text-slate-400 leading-relaxed">Aggregates grievance patterns to reveal high-priority issue concentrations and workload trends across zones.</p>
+                </div>
+
+                <div class="glass-panel p-6 rounded-2xl border border-slate-800 glass-card-hover">
+                    <div class="w-10 h-10 rounded-xl bg-blue-500/10 border border-blue-500/30 flex items-center justify-center text-blue-400 text-lg mb-4">
+                        <i class="fa-solid fa-map-location-dot"></i>
+                    </div>
+                    <h3 class="text-base font-bold text-white mb-2">F. Civic Issue Map</h3>
+                    <p class="text-xs text-slate-400 leading-relaxed">Geospatial representation of problem clusters (potholes, garbage, water leaks) with location privacy controls.</p>
+                </div>
+
+                <div class="glass-panel p-6 rounded-2xl border border-slate-800 glass-card-hover">
+                    <div class="w-10 h-10 rounded-xl bg-rose-500/10 border border-rose-500/30 flex items-center justify-center text-rose-400 text-lg mb-4">
+                        <i class="fa-solid fa-camera-retro"></i>
+                    </div>
+                    <h3 class="text-base font-bold text-white mb-2">G. Image & Voice Reporting</h3>
+                    <p class="text-xs text-slate-400 leading-relaxed">Allows citizens to attach photos or speak naturally to generate structured complaints for increased accessibility.</p>
+                </div>
+
+                <div class="glass-panel p-6 rounded-2xl border border-slate-800 glass-card-hover">
+                    <div class="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-300 text-lg mb-4">
+                        <i class="fa-solid fa-language"></i>
+                    </div>
+                    <h3 class="text-base font-bold text-white mb-2">H. Tamil & Multilingual</h3>
+                    <p class="text-xs text-slate-400 leading-relaxed">Natural interaction in Tamil and English, preserving original complaint meaning without crude word translation.</p>
+                </div>
+
+            </div>
+        </section>
+
+        <section id="principles" class="container mx-auto px-6 lg:px-12 py-16 scroll-mt-20">
+            <div class="text-center max-w-3xl mx-auto mb-12">
+                <span class="text-xs font-mono text-emerald-400 uppercase tracking-widest bg-emerald-950/60 border border-emerald-800/50 px-3 py-1 rounded-full">Guiding Ethos</span>
+                <h2 class="text-3xl md:text-4xl font-extrabold text-white mt-3">Core Product Philosophy</h2>
+                <p class="text-sm md:text-base text-slate-400 mt-2">CivicAI adheres to essential principles ensuring safety, neutrality, and citizen empowerment.</p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                
+                <div class="bg-slate-900/60 p-6 rounded-2xl border border-slate-800">
+                    <h3 class="text-sm font-mono font-bold text-emerald-400 uppercase mb-2 flex items-center space-x-2">
+                        <i class="fa-solid fa-user-shield"></i>
+                        <span>1. Citizen-First</span>
+                    </h3>
+                    <p class="text-xs text-slate-300 leading-relaxed">Designed to be completely understandable to anyone without technical or government background.</p>
+                </div>
+
+                <div class="bg-slate-900/60 p-6 rounded-2xl border border-slate-800">
+                    <h3 class="text-sm font-mono font-bold text-cyan-400 uppercase mb-2 flex items-center space-x-2">
+                        <i class="fa-solid fa-circle-check"></i>
+                        <span>2. Action-Oriented</span>
+                    </h3>
+                    <p class="text-xs text-slate-300 leading-relaxed">Every analysis directly answers: "What can I do next?" rather than giving vague chatbot answers.</p>
+                </div>
+
+                <div class="bg-slate-900/60 p-6 rounded-2xl border border-slate-800">
+                    <h3 class="text-sm font-mono font-bold text-indigo-400 uppercase mb-2 flex items-center space-x-2">
+                        <i class="fa-solid fa-eye"></i>
+                        <span>3. Transparent</span>
+                    </h3>
+                    <p class="text-xs text-slate-300 leading-relaxed">AI assistance is clearly identified. Never pretends that AI classification is an official government decision.</p>
+                </div>
+
+                <div class="bg-slate-900/60 p-6 rounded-2xl border border-slate-800">
+                    <h3 class="text-sm font-mono font-bold text-amber-400 uppercase mb-2 flex items-center space-x-2">
+                        <i class="fa-solid fa-scale-balanced"></i>
+                        <span>4. Non-Political</span>
+                    </h3>
+                    <p class="text-xs text-slate-300 leading-relaxed">Strictly neutral. Promotes no political parties, candidates, or ideologies under any circumstances.</p>
+                </div>
+
+                <div class="bg-slate-900/60 p-6 rounded-2xl border border-slate-800">
+                    <h3 class="text-sm font-mono font-bold text-rose-400 uppercase mb-2 flex items-center space-x-2">
+                        <i class="fa-solid fa-lock"></i>
+                        <span>5. Privacy-Conscious</span>
+                    </h3>
+                    <p class="text-xs text-slate-300 leading-relaxed">Collects only minimal necessary telemetry. Exact citizen residential addresses are protected.</p>
+                </div>
+
+                <div class="bg-slate-900/60 p-6 rounded-2xl border border-slate-800">
+                    <h3 class="text-sm font-mono font-bold text-blue-400 uppercase mb-2 flex items-center space-x-2">
+                        <i class="fa-solid fa-handshake-angle"></i>
+                        <span>6. Human Control</span>
+                    </h3>
+                    <p class="text-xs text-slate-300 leading-relaxed">The citizen remains in control. They can edit AI drafts, reject suggestions, and decide submission.</p>
+                </div>
+
+            </div>
+        </section>
+
+        <footer class="w-full border-t border-slate-800/80 bg-slate-950/90 py-8 px-6 text-center backdrop-blur-md relative z-20">
+            <div class="container mx-auto flex flex-col items-center justify-center space-y-3">
+                <p class="font-sans text-xs md:text-sm tracking-wide text-slate-300 select-all">
+                    © 2026 Barath M · All rights reserved · Chennai, Tamil Nadu, IndiaBuilt with HTML · CSS · JS · Deployed on Cloudflare Pages
+                </p>
+            </div>
+        </footer>
+
+    </div>
+
+    <script>
+        // Ambient Canvas Background Particles
+        const canvas = document.getElementById('bg-canvas');
+        const ctx = canvas.getContext('2d');
+        let particles = [];
+
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+
+        class Particle {
+            constructor() {
+                this.reset();
+            }
+            reset() {
+                this.x = Math.random() * canvas.width;
+                this.y = Math.random() * canvas.height;
+                this.size = Math.random() * 2 + 0.5;
+                this.speedX = (Math.random() - 0.5) * 0.2;
+                this.speedY = (Math.random() - 0.5) * 0.2;
+                this.opacity = Math.random() * 0.3 + 0.1;
+            }
+            update() {
+                this.x += this.speedX;
+                this.y += this.speedY;
+                if (this.x < 0 || this.x > canvas.width || this.y < 0 || this.y > canvas.height) {
+                    this.reset();
+                }
+            }
+            draw() {
+                ctx.fillStyle = `rgba(16, 185, 129, ${this.opacity})`;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+
+        for (let i = 0; i < 50; i++) {
+            particles.push(new Particle());
+        }
+
+        function animateCanvas() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            particles.forEach(p => {
+                p.update();
+                p.draw();
+            });
+            requestAnimationFrame(animateCanvas);
+        }
+        animateCanvas();
+
+        // Demo Datasets
+        const presets = {
+            pothole: {
+                en: "There has been a huge pothole near our school for two months. Bikes are frequently falling there.",
+                ta: "எங்கள் பள்ளிக்கு அருகில் இரண்டு மாதங்களாக ஒரு பெரிய குழாய்/பள்ளம் உள்ளது. பைக்குகள் அடிக்கடி கீழே விழுகின்றன.",
+                cat: "Road Infrastructure",
+                subcat: "Pothole & Surface Damage",
+                severity: "HIGH / Traffic Hazard",
+                dept: "Highways & Municipal Roads Dept",
+                summary: "Large pothole outside school grounds persisting for 2 months, causing recurring motorcycle accidents.",
+                facts: ["Location: School entrance", "Duration: ~2 months", "Hazard: Two-wheeler falls"],
+                actions: ["Attach photo with clear street view", "Note nearby ward number"]
+            },
+            garbage: {
+                en: "The market waste bin has been overflowing for 5 days. Dogs are spreading waste everywhere.",
+                ta: "சந்தை கழிவு தொட்டி 5 நாட்களாக நிரம்பி வழிகிறது. நாய்கள் குப்பைகளை எங்கும் பரப்புகின்றன.",
+                cat: "Sanitation & Solid Waste",
+                subcat: "Garbage Accumulation",
+                severity: "MEDIUM / Public Health",
+                dept: "Solid Waste Management Division",
+                summary: "Uncleared municipal waste near market area causing severe odor and stray animal hazards for 5 days.",
+                facts: ["Location: Public market area", "Duration: 5 days", "Impact: Stench and dog scattering"],
+                actions: ["Note exact bin landmark ID", "Route complaint to zonal sanitation officer"]
+            },
+            water: {
+                en: "Since last week there is no proper water supply in our street and elderly people are struggling.",
+                ta: "கடந்த வாரத்தில் இருந்து எங்கள் தெருவில் முறையான குடிநீர் விநியோகம் இல்லை.",
+                cat: "Water Supply & Utilities",
+                subcat: "Pipe Disruption",
+                severity: "HIGH / Essential Utility",
+                dept: "Metro Water & Sewerage Board",
+                summary: "Complete interruption of piped drinking water supply in residential street for over 7 days.",
+                facts: ["Location: Residential street line", "Duration: ~7 days", "Impact: Essential drinking water crisis"],
+                actions: ["Check if adjacent streets face same issue", "Submit ticket to Metro Water desk"]
+            },
+            light: {
+                en: "The street lights near the bus stand have been dark for a week making it unsafe at night.",
+                ta: "பேருந்து நிறுத்தம் அருகே உள்ள தெருவிளக்குகள் ஒரு வாரமாக எரியவில்லை.",
+                cat: "Public Lighting",
+                subcat: "Streetlight Outage",
+                severity: "MEDIUM / Safety Risk",
+                dept: "Electrical Works Division",
+                summary: "Dark street section near public transit stop due to non-functioning streetlights for 1 week.",
+                facts: ["Location: Bus stand main road", "Duration: 1 week", "Impact: Commuter safety concern"],
+                actions: ["Note pole identification numbers if visible", "Highlight public safety aspect"]
+            }
+        };
+
+        let currentDemoLang = 'en';
+
+        function selectDemoLanguage(lang) {
+            currentDemoLang = lang;
+            document.getElementById('btn-lang-en').className = lang === 'en' 
+                ? 'px-3 py-1 rounded-lg text-xs font-mono bg-emerald-500/20 text-emerald-300 font-bold border border-emerald-500/30' 
+                : 'px-3 py-1 rounded-lg text-xs font-mono text-slate-400 hover:text-slate-200';
+            
+            document.getElementById('btn-lang-ta').className = lang === 'ta' 
+                ? 'px-3 py-1 rounded-lg text-xs font-mono bg-emerald-500/20 text-emerald-300 font-bold border border-emerald-500/30' 
+                : 'px-3 py-1 rounded-lg text-xs font-mono text-slate-400 hover:text-slate-200';
+
+            fillDemoPreset('pothole');
+        }
+
+        function fillDemoPreset(key) {
+            const data = presets[key];
+            document.getElementById('demo-input').value = currentDemoLang === 'ta' ? data.ta : data.en;
+            
+            document.getElementById('demo-res-category').innerText = data.cat;
+            document.getElementById('demo-res-subcat').innerText = data.subcat;
+            document.getElementById('demo-res-severity').innerHTML = `<i class="fa-solid fa-triangle-exclamation text-amber-400"></i><span>${data.severity}</span>`;
+            document.getElementById('demo-res-dept').innerText = data.dept;
+            document.getElementById('demo-res-summary').innerText = data.summary;
+
+            document.getElementById('demo-res-facts').innerHTML = data.facts.map(f => `<li class="flex items-start space-x-2"><i class="fa-solid fa-check text-emerald-400 text-[10px] mt-1"></i><span>${f}</span></li>`).join('');
+            document.getElementById('demo-res-actions').innerHTML = data.actions.map(a => `<li class="flex items-start space-x-2"><i class="fa-solid fa-camera text-cyan-400 text-[10px] mt-1"></i><span>${a}</span></li>`).join('');
+
+            updateLetterDraft(data);
+        }
+
+        function updateLetterDraft(data) {
+            const val = document.getElementById('demo-input').value;
+            const letterText = `To,
+The Executive Engineer / Zonal Authority,
+Municipal Corporation / Local Body Works.
+
+SUBJECT: Formal Citizen Complaint — ${data.cat} (${data.subcat})
+
+Respected Sir/Madam,
+
+I am submitting this formal grievance regarding a persistent civic issue in our locality:
+"${val}"
+
+Summary of Facts:
+1. Category: ${data.cat}
+2. Primary Issue: ${data.subcat}
+3. Estimated Duration & Impact: ${data.summary}
+
+I request the department to kindly review this matter, conduct a site inspection, and initiate necessary repairs.
+
+Yours faithfully,
+A Resident Citizen
+[Contact & Geotagged Evidence Attached]`;
+
+            document.getElementById('demo-letter-textarea').value = letterText;
+        }
+
+        function runDemoAnalysis() {
+            const btn = document.getElementById('demo-run-btn');
+            btn.innerHTML = `<i class="fa-solid fa-spinner animate-spin"></i> <span>Processing Simulated Analysis...</span>`;
+            btn.disabled = true;
+
+            setTimeout(() => {
+                btn.innerHTML = `<i class="fa-solid fa-bolt"></i> <span>Run Simulated AI Analysis</span>`;
+                btn.disabled = false;
+                
+                // Trigger quick visual flash
+                const view = document.getElementById('demo-struct-view');
+                view.classList.add('opacity-50');
+                setTimeout(() => view.classList.remove('opacity-50'), 200);
+            }, 600);
+        }
+
+        function switchDemoTab(tab) {
+            if (tab === 'struct') {
+                document.getElementById('demo-struct-view').classList.remove('hidden');
+                document.getElementById('demo-letter-view').classList.add('hidden');
+                document.getElementById('tab-struct').className = "text-xs font-mono font-bold px-3 py-1.5 rounded-lg bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 flex items-center space-x-1.5";
+                document.getElementById('tab-letter').className = "text-xs font-mono font-medium px-3 py-1.5 rounded-lg text-slate-400 hover:text-white flex items-center space-x-1.5";
+            } else {
+                document.getElementById('demo-struct-view').classList.add('hidden');
+                document.getElementById('demo-letter-view').classList.remove('hidden');
+                document.getElementById('tab-letter').className = "text-xs font-mono font-bold px-3 py-1.5 rounded-lg bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 flex items-center space-x-1.5";
+                document.getElementById('tab-struct').className = "text-xs font-mono font-medium px-3 py-1.5 rounded-lg text-slate-400 hover:text-white flex items-center space-x-1.5";
+            }
+        }
+
+        function copyDemoDraft() {
+            const text = document.getElementById('demo-letter-textarea').value;
+            navigator.clipboard.writeText(text);
+            document.getElementById('demo-copy-txt').innerText = "Copied!";
+            setTimeout(() => document.getElementById('demo-copy-txt').innerText = "Copy Text", 2000);
+        }
+
+        window.onload = function() {
+            fillDemoPreset('pothole');
+        };
+    </script>
+</body>
+</html>
